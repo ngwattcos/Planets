@@ -284,8 +284,12 @@ void mouseReleased() {
 }
 
 ///////////////////////////////////////
-float distSq(Vector p1, Vector p2) {
+float distSq(PVector p1, PVector p2) {
 	return (pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
+}
+
+float distSq(PVector2D p1, PVector2D p2) {
+	return (pow(p1.v.x - p2.v.x, 2) + pow(p1.v.y - p2.v.y, 2));
 }
 
 float distSq(float x, float y) {

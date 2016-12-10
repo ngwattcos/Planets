@@ -1,17 +1,16 @@
 // ficional constant in a fictional universe
 float G = 0.001;
 
-abstract class Physics {
+class Physics {
 
-	int mass;
-	int moment;
+	float mass;
+	float moment;
 	PVector2D center; // it is assumed center is the center of mass
 	PVector2D velocity;
 	PVector2D acceleration;
 	PVector2D position;
 	PVector2D prev;
 
-	boolean inFrustum = true;
 
 	PVector2D forces;
 	float torques; // is used to represent torque
@@ -20,13 +19,19 @@ abstract class Physics {
 	float omega;
 	float alpha;
 
+	float cd = 0;	// coefficient of drag
+
 	String typeObj;
 
-	public Physics(PVector2D _position, PVector2D _velocity, int _mass, int _moment) {
+	public Physics() {
+		this(new PVector2D(0, 0), new PVector2D(0, 0), 0, 0);
+	}
+
+	public Physics(PVector2D _position, PVector2D _velocity, float _mass, float _moment) {
 		position = _position;
 		velocity = _velocity.copy();
 		forces = new PVector2D(0, 0);
-		acceleration = forces.divide(mass);
+		acceleration = forces.div(mass);
 
 		mass = _mass;
 		moment = _moment;
@@ -39,7 +44,7 @@ abstract class Physics {
 		forces = forces.add(force);
 
 		// torque = r x F
-		if (abs(force.cross(pos)) > 0.0001) {
+		if (abs(force.cross(pos).mag()) > 0.0001) {
 
 			// torques
 
@@ -92,7 +97,10 @@ abstract class Physics {
 
 		interact();
 
-		acceleration = forces.divide(mass);
+		// drag force
+		forces = forces.add(new PVector2D(velocity.copy().normalized().mult(pow(velocity.mag() * cd, 2))));
+
+		acceleration = forces.div(mass);
 
 		velocity = velocity.add(acceleration);
 
@@ -105,24 +113,25 @@ abstract class Physics {
 		angle += omega;
 
 		// if position is too far left, move to right edge
-		if (position.x < -boundsX) {
-			position.x = boundsX;
+		/*if (position.v.x < -boundsX) {
+			position.v.x = boundsX;
 		}
 
 		// and vice versa
-		if (position.x > boundsX) {
-			position.x = -boundsX;
+		if (position.v.x > boundsX) {
+			position.v.x = -boundsX;
 		}
 
 		// is position is too far up, move to bottome edge
-		if (position.y < -boundsY) {
-			position.y = boundsY;
+		if (position.v.y < -boundsY) {
+			position.v.y = boundsY;
 		}
 
 		// and vice versa
-		if (position.y > boundsY) {
-			position.y = -boundsY;
-		}
+		if (position.v.y > boundsY) {
+			position.v.y = -boundsY;
+		}*/
+		clearForces();
 	}
 
 	void drawForces() {
@@ -135,12 +144,8 @@ abstract class Physics {
 
 	void draw() {
 
-		if (inFrustum) {
-			drawObj();
-		}
-
 		// drawForces();
 
-		clearForces();
+		
 	}
 }

@@ -15,72 +15,266 @@ import java.io.IOException;
 public class Planets extends PApplet {
 
 public void setup() {
+	
+	for (int i = 0; i < keys.length; i++) {
+		keys[i] = new Key(i);
+	}
+}
+
+Camera camera;
+
+public void load() {
+	camera = new Camera();
+
 
 }
 
+int frameCounter = 0;
+
 public void draw() {
-	
+	background(0);
+
+	if (frameCounter == 0) {
+		load();
+	}
+
+	updateKeys();
+
+	mouse.check();
+
+	camera.update();
+
+	mouse.draw();
 }
 class Body {
 	
 }
-class GameObject {
+class Camera extends GameObject {
+	
+	float scale;
+
+	public Camera(Transform _transform, float _scale) {
+		super(_transform);
+		scale = _scale;
+
+		physics = new Physics(transform.position, new PVector2D(0, 0), 10, 0);
+		// physics = new Physics();
+	}
+
+	public Camera() {
+		this(new Transform(), 0);
+	}
+
+	public void interact() {
+		if (keys[38].pressed) {
+
+		}
+	}
+
+	public void update() {
+		interact();
+	}
+}
+class GameObject extends Node {
 
 	Transform transform;
 	Physics physics;
+	boolean inFrustum = true;
+	Camera camera;
 
 	// a reference to physics.position
 	PVector position;
 
+	// GameObject with physics
 	public GameObject(Transform _transform) {
 		transform = _transform;
+		transform.setBody(this);
+
+		// this reference stays forever
+		// transform.position = physics.position;
+	}
+
+	public void applyPhysics(PVector2D _velocity, float _mass, float _moment) {
+		physics = new Physics(transform.position, _velocity, _mass, _moment);
+	}
+
+	public void registerCamera(Camera _camera) {
+		camera = _camera;
+	}
+
+	// void registerScreen()
+
+	// GamePbject with no physics
+
+
+	public void update() {
+		if (physics != null) {
+			physics.update();
+		}
+
+		inFrustum = abs(transform.position.getX() - camera.transform.position.getX()) < width/2 && abs(transform.position.getY() - camera.transform.position.getY()) < height/2;
+
+
 	}
 }
-class PVector2D extends PVector {
-	
+class Node {
+	Node parent;
+
+	ArrayList<Node> children;
+
+	public Node() {
+		
+	}
+}
+// wrapper class for PVector to give extended functionality
+
+class PVector2D {
+	PVector v;
+
+	public PVector2D(float x, float y) {
+		v = new PVector(x, y);
+	}
+
+	public PVector2D(PVector2D _vec) {
+		v = _vec.v.copy();
+	}
+
+	public PVector2D(PVector _v) {
+		v = _v;
+	}
+
+	public void set(PVector _v2) {
+		v = _v2;
+	}
+
+	public void set(float x, float y) {
+		v.x = x;
+		v.y = y;
+	}
+
+	// create new copy
+	public PVector2D copy() {
+		return new PVector2D(v.copy());
+	}
+
+	public void reset() {
+		v.x = 0;
+		v.y = 0;
+	}
+
+	public PVector2D add(PVector2D _delta) {
+		PVector2D v3 = this.copy();
+		v3.v.add(_delta.v);
+
+		return v3;
+	}
+
+	public PVector2D sub(PVector2D _delta) {
+		PVector2D v3 = this.copy();
+		v3.v.sub(_delta.v);
+
+		return v3;
+	}
+
+	public PVector2D mult(float _factor) {
+		PVector2D v3 = this.copy();
+		v3.v.mult(_factor);
+
+		return v3;
+	}
+
+	public PVector2D div(float _factor) {
+		PVector2D v3 = this.copy();
+		v3.v.div(_factor);
+
+		return v3;
+	}
+
+	public PVector2D cross(PVector2D _v2) {
+		PVector2D v3 = this.copy();
+		v3.v.cross(_v2.v);
+
+		return v3;
+	}
+
+	public PVector2D dot(PVector2D _v2) {
+		PVector2D v3 = this.copy();
+		v3.v.dot(_v2.v);
+
+		return v3;
+	}
+
+	public float mag() {
+		return v.mag();
+	}
+
+	// returns the normalized copy
+	public PVector2D normalized() {
+		PVector2D v2 = this.copy();
+		v2.v.normalize();
+
+		return v2;
+	}
+
+	public float angleBetween(PVector2D v2) {
+		return atan2(v.y - v2.v.y, v.x - v2.v.x) + PI;
+	}
+
+	public float getX() {
+		return v.x;
+	}
+
+	public float getY() {
+		return v.y;
+	}
 }
 // ficional constant in a fictional universe
 float G = 0.001f;
 
-abstract class Physics {
+class Physics {
 
-	int mass;
-	int moment;
-	Vector center; // it is assumed center is the center of mass
-	Vector velocity;
-	Vector acceleration;
-	Vector position;
-	Vector prev;
+	float mass;
+	float moment;
+	PVector2D center; // it is assumed center is the center of mass
+	PVector2D velocity;
+	PVector2D acceleration;
+	PVector2D position;
+	PVector2D prev;
 
-	boolean inFrustum = true;
 
-	Vector forces;
+	PVector2D forces;
 	float torques; // is used to represent torque
 
 	float angle;
 	float omega;
 	float alpha;
 
+	float cd = 0;	// coefficient of drag
+
 	String typeObj;
 
-	public Physics(Vector _position, Vector _velocity, int _mass, int _moment) {
+	public Physics() {
+		this(new PVector2D(0, 0), new PVector2D(0, 0), 0, 0);
+	}
+
+	public Physics(PVector2D _position, PVector2D _velocity, float _mass, float _moment) {
 		position = _position;
 		velocity = _velocity.copy();
-		forces = new Vector(0, 0);
-		acceleration = forces.divide(mass);
+		forces = new PVector2D(0, 0);
+		acceleration = forces.div(mass);
 
 		mass = _mass;
 		moment = _moment;
 
 	}
 
-	public void applyForce(Vector force, Vector pos) {
+	public void applyForce(PVector2D force, PVector2D pos) {
 		// can also apply a torque
 
 		forces = forces.add(force);
 
 		// torque = r x F
-		if (abs(force.cross(pos)) > 0.0001f) {
+		if (abs(force.cross(pos).mag()) > 0.0001f) {
 
 			// torques
 
@@ -94,7 +288,7 @@ abstract class Physics {
 			// T = r * F * sin(\u00f8)
 
 			// + is counterclockwise, - is clockwise
-			t1 = r * force.mag * sin(theta) / 10.0f;
+			t1 = r * force.mag() * sin(theta) / 10.0f;
 
 			// torques += t1;
 		}
@@ -108,11 +302,11 @@ abstract class Physics {
 		// magnitude of the force
 		float fg = G * mass * o.mass / distSq(position, o.position);
 
-		// combine into a vector
-		Vector force_gravity = new Vector(theta, fg, "");
+		// combine into a PVector2D
+		PVector2D force_gravity = new PVector2D(theta, fg);
 
 		// add this to the net force
-		applyForce(force_gravity, new Vector(0, 0));
+		applyForce(force_gravity, new PVector2D(0, 0));
 
 		println(fg);
 	}
@@ -133,7 +327,10 @@ abstract class Physics {
 
 		interact();
 
-		acceleration = forces.divide(mass);
+		// drag force
+		forces = forces.add(new PVector2D(velocity.copy().normalized().mult(pow(velocity.mag() * cd, 2))));
+
+		acceleration = forces.div(mass);
 
 		velocity = velocity.add(acceleration);
 
@@ -146,24 +343,25 @@ abstract class Physics {
 		angle += omega;
 
 		// if position is too far left, move to right edge
-		if (position.x < -boundsX) {
-			position.x = boundsX;
+		/*if (position.v.x < -boundsX) {
+			position.v.x = boundsX;
 		}
 
 		// and vice versa
-		if (position.x > boundsX) {
-			position.x = -boundsX;
+		if (position.v.x > boundsX) {
+			position.v.x = -boundsX;
 		}
 
 		// is position is too far up, move to bottome edge
-		if (position.y < -boundsY) {
-			position.y = boundsY;
+		if (position.v.y < -boundsY) {
+			position.v.y = boundsY;
 		}
 
 		// and vice versa
-		if (position.y > boundsY) {
-			position.y = -boundsY;
-		}
+		if (position.v.y > boundsY) {
+			position.v.y = -boundsY;
+		}*/
+		clearForces();
 	}
 
 	public void drawForces() {
@@ -176,36 +374,60 @@ abstract class Physics {
 
 	public void draw() {
 
-		if (inFrustum) {
-			drawObj();
-		}
-
 		// drawForces();
 
-		clearForces();
+		
 	}
 }
 class System {
 	
 }
 class Transform {
-	PVector position;
+	Physics physics;
+	PVector2D position;
 	float rotation;
 
+	GameObject body;
+
 	public Transform() {
-		this(new PVector(0, 0), 0);
+		this(new PVector2D(0, 0), 0);
 	}
 
-	public Transform(PVector _position) {
+	public Transform(PVector2D _position) {
 		this(_position, 0.0f);
 	}
 
-	public Transform(PVector _position, float _rotation) {
+	public Transform(PVector2D _position, float _rotation) {
 		// does NOT store a copy, but a direct reference
 		position = _position;
-		roation = _rotation;
+		rotation = _rotation;
 	}
 
+	public void setPosition(PVector2D _position) {
+		position = _position;
+	}
+
+	public void setRotation(float _rotation) {
+		rotation = _rotation;
+	}
+
+	public void move(Transform _delta) {
+
+	}
+
+	public void setBody(GameObject o) {
+		body = o;
+	}
+
+}
+class Universe {
+	ArrayList<System> systems;
+
+	PVector2D size;
+
+	public Universe(PVector2D _size) {
+		size = _size;
+	}
 }
 class Key {
 	int code;
@@ -493,8 +715,12 @@ public void mouseReleased() {
 }
 
 ///////////////////////////////////////
-public float distSq(Vector p1, Vector p2) {
+public float distSq(PVector p1, PVector p2) {
 	return (pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
+}
+
+public float distSq(PVector2D p1, PVector2D p2) {
+	return (pow(p1.v.x - p2.v.x, 2) + pow(p1.v.y - p2.v.y, 2));
 }
 
 public float distSq(float x, float y) {
@@ -642,6 +868,7 @@ class Vector {
 	}
 
 }
+    public void settings() { 	size(900, 600); }
     static public void main(String[] passedArgs) {
         String[] appletArgs = new String[] { "Planets" };
         if (passedArgs != null) {

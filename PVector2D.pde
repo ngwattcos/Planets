@@ -35,43 +35,43 @@ class PVector2D {
 	}
 
 	PVector2D add(PVector2D _delta) {
-		PVector v3 = this.copy();
+		PVector2D v3 = this.copy();
 		v3.v.add(_delta.v);
 
 		return v3;
 	}
 
 	PVector2D sub(PVector2D _delta) {
-		PVector v3 = this.copy();
+		PVector2D v3 = this.copy();
 		v3.v.sub(_delta.v);
 
 		return v3;
 	}
 
 	PVector2D mult(float _factor) {
-		PVector v3 = this.copy();
-		v3.v.mult(_delta.v);
+		PVector2D v3 = this.copy();
+		v3.v.mult(_factor);
 
 		return v3;
 	}
 
 	PVector2D div(float _factor) {
-		PVector v3 = this.copy();
-		v3.v.div(_delta.v);
+		PVector2D v3 = this.copy();
+		v3.v.div(_factor);
 
 		return v3;
 	}
 
 	PVector2D cross(PVector2D _v2) {
-		PVector v3 = this.copy();
-		v3.v.cross(_delta.v);
+		PVector2D v3 = this.copy();
+		v3.v.cross(_v2.v);
 
 		return v3;
 	}
 
 	PVector2D dot(PVector2D _v2) {
-		PVector v3 = this.copy();
-		v3.v.dot(_delta.v);
+		PVector2D v3 = this.copy();
+		v3.v.dot(_v2.v);
 
 		return v3;
 	}
@@ -82,13 +82,21 @@ class PVector2D {
 
 	// returns the normalized copy
 	PVector2D normalized() {
-		PVector2D v2 new PVector2D(v);
-		v2.normalize();
+		PVector2D v2 = this.copy();
+		v2.v.normalize();
 
 		return v2;
 	}
 
-	float angleBetween(PVector2D _v2) {
-		return atan2(y - v2.v.y, x - v2.v.x) + PI;
+	float angleBetween(PVector2D v2) {
+		return atan2(v.y - v2.v.y, v.x - v2.v.x) + PI;
+	}
+
+	float getX() {
+		return v.x;
+	}
+
+	float getY() {
+		return v.y;
 	}
 }
