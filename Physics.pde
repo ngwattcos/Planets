@@ -1,9 +1,146 @@
-interface Physics {
-	void applyForce();
+// ficional constant in a fictional universe
+float G = 0.001;
 
-	void applyGravity();
+abstract class Physics {
 
-	void interact();
+	int mass;
+	int moment;
+	Vector center; // it is assumed center is the center of mass
+	Vector velocity;
+	Vector acceleration;
+	Vector position;
+	Vector prev;
 
-	void update();
+	boolean inFrustum = true;
+
+	Vector forces;
+	float torques; // is used to represent torque
+
+	float angle;
+	float omega;
+	float alpha;
+
+	String typeObj;
+
+	public Physics(Vector _position, Vector _velocity, int _mass, int _moment) {
+		position = _position;
+		velocity = _velocity.copy();
+		forces = new Vector(0, 0);
+		acceleration = forces.divide(mass);
+
+		mass = _mass;
+		moment = _moment;
+
+	}
+
+	void applyForce(Vector force, Vector pos) {
+		// can also apply a torque
+
+		forces = forces.add(force);
+
+		// torque = r x F
+		if (abs(force.cross(pos)) > 0.0001) {
+
+			// torques
+
+			// direction to point of application
+			float theta;
+			float r;
+			float t1;
+
+			theta = position.angleBetween(pos);
+			r = sqrt(distSq(position, pos));
+			// T = r * F * sin(ø)
+
+			// + is counterclockwise, - is clockwise
+			t1 = r * force.mag * sin(theta) / 10.0;
+
+			// torques += t1;
+		}
+	}
+
+	void applyGravity(Physics o) {
+
+		// angle from the object
+		float theta = position.angleBetween(o.position);
+
+		// magnitude of the force
+		float fg = G * mass * o.mass / distSq(position, o.position);
+
+		// combine into a vector
+		Vector force_gravity = new Vector(theta, fg, "");
+
+		// add this to the net force
+		applyForce(force_gravity, new Vector(0, 0));
+
+		println(fg);
+	}
+
+	void interact() {
+
+	}
+
+	void clearForces() {
+		forces.reset();
+
+		torques = 0;
+	}
+
+	void update() {
+
+		prev = position.copy();
+
+		interact();
+
+		acceleration = forces.divide(mass);
+
+		velocity = velocity.add(acceleration);
+
+		position = position.add(velocity);
+
+		alpha = torques / moment;
+
+		omega += alpha;
+
+		angle += omega;
+
+		// if position is too far left, move to right edge
+		if (position.x < -boundsX) {
+			position.x = boundsX;
+		}
+
+		// and vice versa
+		if (position.x > boundsX) {
+			position.x = -boundsX;
+		}
+
+		// is position is too far up, move to bottome edge
+		if (position.y < -boundsY) {
+			position.y = boundsY;
+		}
+
+		// and vice versa
+		if (position.y > boundsY) {
+			position.y = -boundsY;
+		}
+	}
+
+	void drawForces() {
+		// forces.draw(position);
+	}
+
+	void drawObj() {
+
+	}
+
+	void draw() {
+
+		if (inFrustum) {
+			drawObj();
+		}
+
+		// drawForces();
+
+		clearForces();
+	}
 }

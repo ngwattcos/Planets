@@ -1,3 +1,3 @@
-class Body extends GameObject {
+class Body {
 	
 }
