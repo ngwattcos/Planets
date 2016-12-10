@@ -1,4 +1,4 @@
-class GameObject {
+class GameObject extends Node {
 
 	Transform transform;
 	Physics physics;

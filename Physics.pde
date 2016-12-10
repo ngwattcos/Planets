@@ -5,15 +5,15 @@ abstract class Physics {
 
 	int mass;
 	int moment;
-	Vector center; // it is assumed center is the center of mass
-	Vector velocity;
-	Vector acceleration;
-	Vector position;
-	Vector prev;
+	PVector2D center; // it is assumed center is the center of mass
+	PVector2D velocity;
+	PVector2D acceleration;
+	PVector2D position;
+	PVector2D prev;
 
 	boolean inFrustum = true;
 
-	Vector forces;
+	PVector2D forces;
 	float torques; // is used to represent torque
 
 	float angle;
@@ -22,10 +22,10 @@ abstract class Physics {
 
 	String typeObj;
 
-	public Physics(Vector _position, Vector _velocity, int _mass, int _moment) {
+	public Physics(PVector2D _position, PVector2D _velocity, int _mass, int _moment) {
 		position = _position;
 		velocity = _velocity.copy();
-		forces = new Vector(0, 0);
+		forces = new PVector2D(0, 0);
 		acceleration = forces.divide(mass);
 
 		mass = _mass;
@@ -33,7 +33,7 @@ abstract class Physics {
 
 	}
 
-	void applyForce(Vector force, Vector pos) {
+	void applyForce(PVector2D force, PVector2D pos) {
 		// can also apply a torque
 
 		forces = forces.add(force);
@@ -53,7 +53,7 @@ abstract class Physics {
 			// T = r * F * sin(ø)
 
 			// + is counterclockwise, - is clockwise
-			t1 = r * force.mag * sin(theta) / 10.0;
+			t1 = r * force.mag() * sin(theta) / 10.0;
 
 			// torques += t1;
 		}
@@ -67,11 +67,11 @@ abstract class Physics {
 		// magnitude of the force
 		float fg = G * mass * o.mass / distSq(position, o.position);
 
-		// combine into a vector
-		Vector force_gravity = new Vector(theta, fg, "");
+		// combine into a PVector2D
+		PVector2D force_gravity = new PVector2D(theta, fg);
 
 		// add this to the net force
-		applyForce(force_gravity, new Vector(0, 0));
+		applyForce(force_gravity, new PVector2D(0, 0));
 
 		println(fg);
 	}
