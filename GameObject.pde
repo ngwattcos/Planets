@@ -30,13 +30,17 @@ class GameObject extends Node {
 	// GamePbject with no physics
 
 
-	void update() {
-		if (physics != null) {
+	void update(Camera _camera) {
+		// if (physics != null) {
 			physics.update();
-		}
+		// }
 
-		inFrustum = abs(transform.position.getX() - camera.transform.position.getX()) < width/2 && abs(transform.position.getY() - camera.transform.position.getY()) < height/2;
+		inFrustum = abs(transform.position.getX() - _camera.transform.position.getX()) < width/2 && abs(transform.position.getY() - _camera.transform.position.getY()) < height/2;
 
+
+	}
+
+	void draw() {
 
 	}
 }

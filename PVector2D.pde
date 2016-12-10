@@ -34,47 +34,72 @@ class PVector2D {
 		v.y = 0;
 	}
 
-	PVector2D add(PVector2D _delta) {
+	PVector2D add(PVector2D _delta, String s) {
 		PVector2D v3 = this.copy();
 		v3.v.add(_delta.v);
 
 		return v3;
 	}
 
-	PVector2D sub(PVector2D _delta) {
+	PVector2D sub(PVector2D _delta, String s) {
 		PVector2D v3 = this.copy();
 		v3.v.sub(_delta.v);
 
 		return v3;
 	}
 
-	PVector2D mult(float _factor) {
+	PVector2D mult(float _factor, String s) {
 		PVector2D v3 = this.copy();
 		v3.v.mult(_factor);
 
 		return v3;
 	}
 
-	PVector2D div(float _factor) {
+	PVector2D div(float _factor, String s) {
 		PVector2D v3 = this.copy();
 		v3.v.div(_factor);
 
 		return v3;
 	}
 
-	PVector2D cross(PVector2D _v2) {
+	PVector2D cross(PVector2D _v2, String s) {
 		PVector2D v3 = this.copy();
 		v3.v.cross(_v2.v);
 
 		return v3;
 	}
 
-	PVector2D dot(PVector2D _v2) {
+	PVector2D dot(PVector2D _v2, String s) {
 		PVector2D v3 = this.copy();
 		v3.v.dot(_v2.v);
 
 		return v3;
 	}
+	////////////////////////////
+	void add(PVector2D _delta) {
+		v.add(_delta.v);
+	}
+
+	void sub(PVector2D _delta) {
+		v.sub(_delta.v);
+	}
+
+	void mult(float _factor) {
+		v.mult(_factor);
+	}
+
+	void div(float _factor) {
+		v.div(_factor);
+	}
+
+	void cross(PVector2D _v2) {
+		v.cross(_v2.v);
+	}
+
+	void dot(PVector2D _v2) {
+		v.dot(_v2.v);
+	}
+	////////////////////////////
 
 	float mag() {
 		return v.mag();
@@ -98,5 +123,9 @@ class PVector2D {
 
 	float getY() {
 		return v.y;
+	}
+
+	public String toString() {
+		return v.x + ", " + v.y;
 	}
 }

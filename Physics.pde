@@ -2,6 +2,7 @@
 float G = 0.001;
 
 class Physics {
+	float threshold = 0.02;
 
 	float mass;
 	float moment;
@@ -31,7 +32,8 @@ class Physics {
 		position = _position;
 		velocity = _velocity.copy();
 		forces = new PVector2D(0, 0);
-		acceleration = forces.div(mass);
+		acceleration = forces.copy();
+		acceleration.div(mass);
 
 		mass = _mass;
 		moment = _moment;
@@ -40,11 +42,10 @@ class Physics {
 
 	void applyForce(PVector2D force, PVector2D pos) {
 		// can also apply a torque
-
-		forces = forces.add(force);
+		forces.add(force);
 
 		// torque = r x F
-		if (abs(force.cross(pos).mag()) > 0.0001) {
+		if (abs(force.copy().cross(pos, "reference").mag()) > 0.0001) {
 
 			// torques
 
@@ -64,6 +65,12 @@ class Physics {
 		}
 	}
 
+	void cullMovement() {
+		if (velocity.mag() < threshold && forces.mag() < threshold) {
+			velocity.reset();
+		}
+	}
+
 	void applyGravity(Physics o) {
 
 		// angle from the object
@@ -78,7 +85,7 @@ class Physics {
 		// add this to the net force
 		applyForce(force_gravity, new PVector2D(0, 0));
 
-		println(fg);
+		// println(fg);
 	}
 
 	void interact() {
@@ -97,14 +104,22 @@ class Physics {
 
 		interact();
 
+		cullMovement();
+
 		// drag force
-		forces = forces.add(new PVector2D(velocity.copy().normalized().mult(pow(velocity.mag() * cd, 2))));
+		PVector2D forceDrag = velocity.copy().normalized();
+		// float fac = pow(velocity.mag(), 2) * cd;
+		float fac = velocity.mag() * cd;
+		forceDrag.mult(-1 * fac);
+		forces.add(forceDrag);
 
-		acceleration = forces.div(mass);
+		acceleration = forces.copy();
+		acceleration.div(mass);
 
-		velocity = velocity.add(acceleration);
+		velocity.add(acceleration);
 
-		position = position.add(velocity);
+		position.add(velocity);
+		println(velocity + " - " + position);
 
 		alpha = torques / moment;
 
