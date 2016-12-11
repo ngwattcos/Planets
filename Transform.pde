@@ -35,4 +35,8 @@ class Transform {
 		body = o;
 	}
 
+	float getRotation() {
+		return rotation;
+	}
+
 }

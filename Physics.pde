@@ -2,6 +2,8 @@
 float G = 0.001;
 
 class Physics {
+	boolean hasPhysics;
+
 	float threshold = 0.02;
 
 	float mass;
@@ -11,7 +13,6 @@ class Physics {
 	PVector2D acceleration;
 	PVector2D position;
 	PVector2D prev;
-
 
 	PVector2D forces;
 	float torques; // is used to represent torque
@@ -25,10 +26,11 @@ class Physics {
 	String typeObj;
 
 	public Physics() {
-		this(new PVector2D(0, 0), new PVector2D(0, 0), 0, 0);
+		this(new PVector2D(0, 0), new PVector2D(0, 0), 0, 0, true);
 	}
 
-	public Physics(PVector2D _position, PVector2D _velocity, float _mass, float _moment) {
+	public Physics(PVector2D _position, PVector2D _velocity, float _mass, float _moment, boolean _hasPhysics) {
+		hasPhysics = _hasPhysics;
 		position = _position;
 		velocity = _velocity.copy();
 		forces = new PVector2D(0, 0);
@@ -115,11 +117,18 @@ class Physics {
 
 		acceleration = forces.copy();
 		acceleration.div(mass);
+		if (frameCount > 15) {
+			acceleration.mult(30/frameRate);
+		}
+		
 
 		velocity.add(acceleration);
+		if (frameCount > 15) {
+			velocity.mult(30/frameRate);
+		}
+		
 
 		position.add(velocity);
-		println(velocity + " - " + position);
 
 		alpha = torques / moment;
 

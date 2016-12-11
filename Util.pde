@@ -295,3 +295,26 @@ float distSq(PVector2D p1, PVector2D p2) {
 float distSq(float x, float y) {
 	return (pow(x, 2) + pow(y, 2));
 }
+
+///////////////////////////////////////
+void translate(Transform transform) {
+	translate(transform.position.getX(), transform.position.getY());
+}
+
+void rotate(Transform transform) {
+	rotate(transform.getRotation());
+}
+void circle(Transform transform, float radius) {
+	pushMatrix();
+		translate(transform);
+		ellipse(0, 0, radius * 2, radius * 2);
+	popMatrix();
+}
+
+void line(Transform t1, Transform t2) {
+	line(t1.position.getX(), t1.position.getY(), t2.position.getX(), t2.position.getY());
+}
+
+void line(PVector2D p1, PVector2D p2) {
+	line(p1.getX(), p1.getY(), p2.getX(), p2.getY());
+}

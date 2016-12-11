@@ -20,6 +20,7 @@ PFont courierNew;
 
 public void setup() {
 	
+	frameRate(32);
 
 	monaco = createFont("monaco", 20);
 	courierNew = createFont("monaco", 10);
@@ -29,26 +30,35 @@ public void setup() {
 	}
 }
 
-Camera camera;
+Camera camera = new Camera();
 
 public void load() {
-	camera = new Camera();
 
-	objects = new ArrayList<GameObject>();
+	
+	Star sun = new Star("Sun", new Transform(new PVector2D(0, 300)), 300, new Color(255, 150, 0));
+	objects.add(sun);
 
+	Planet earth = new Planet("Earth", 30, new Color(0, 150, 255), sun, 600);
+	objects.add(earth);
 }
 
-ArrayList<GameObject> objects;
+ArrayList<GameObject> objects = new ArrayList<GameObject>();
 
 int frameCounter = 0;
+
+public void updateGame() {
+	for (GameObject o: objects) {
+		o.update();
+	}
+}
 
 public void drawGame() {
 	for (GameObject o: objects) {
 		o.draw();
 	}
 	fill(255, 150, 0);
-	noStroke();
-	ellipse(0, 0, 1000, 1000);
+	// noStroke();
+	// ellipse(0, 0, 1000, 1000);
 }
 
 public void debug() {
@@ -59,10 +69,11 @@ public void debug() {
 }
 
 public void draw() {
-	background(0);
-	textFont(courierNew, 12);
 
-	if (frameCounter == 0) {
+	background(0);
+	textFont(courierNew, 11);
+
+	if (frameCounter == 10) {
 		load();
 	}
 
@@ -70,7 +81,9 @@ public void draw() {
 
 	mouse.check();
 
-	camera.update(camera);
+	camera.update();
+
+	updateGame();
 
 	pushMatrix();
 		translate(-camera.transform.position.getX(), -camera.transform.position.getY());
@@ -94,8 +107,8 @@ class Camera extends GameObject {
 		super(_transform);
 		scale = _scale;
 
-		applyPhysics(new PVector2D(10, 0), 10, 0);
-		physics.cd = 0.7f;
+		applyPhysics(new PVector2D(10, 0), 10, 0, true);
+		physics.cd = 2;
 		// physics = new Physics();
 	}
 
@@ -106,35 +119,69 @@ class Camera extends GameObject {
 	public void interact() {
 		if (active) {
 			if (keys[37].pressed) {
-				fill(0, 255, 255);
-				ellipse(width/2, height/2, 50, 50);
-				physics.applyForce(new PVector2D(-10, 0), new PVector2D(0, 0));
+				physics.applyForce(new PVector2D(-50, 0), new PVector2D(0, 0));
 			}
 			if (keys[38].pressed) {
-				fill(0, 255, 255);
-				ellipse(width/2, height/2, 50, 50);
-				physics.applyForce(new PVector2D(0, -10), new PVector2D(0, 0));
+				physics.applyForce(new PVector2D(0, -50), new PVector2D(0, 0));
 
 			}
 			if (keys[39].pressed) {
-				fill(0, 255, 255);
-				ellipse(width/2, height/2, 50, 50);
-				physics.applyForce(new PVector2D(10, 0), new PVector2D(0, 0));
+				physics.applyForce(new PVector2D(50, 0), new PVector2D(0, 0));
 
 			}
 			if (keys[40].pressed) {
-				fill(0, 255, 255);
-				ellipse(width/2, height/2, 50, 50);
-				physics.applyForce(new PVector2D(0, 10), new PVector2D(0, 0));
+				physics.applyForce(new PVector2D(0, 50), new PVector2D(0, 0));
 
 			}
 		}
 		
 	}
 
-	public void update(Camera _camera) {
-		super.update(_camera);
+	public void update() {
 		interact();
+		physics.update();
+	}
+}
+class CelestialBody extends GameObject {
+	String name;
+	float radius;
+	float mass;
+	public CelestialBody(String _name, Transform _transform, float _radius) {
+		super(_transform);
+
+		radius = _radius;
+
+		mass = pow(radius, 3);
+		applyPhysics(new PVector2D(10, 0), mass, pow(mass, 5/3), false);
+		name = _name;
+	}
+
+	public String getName() {
+		return name + "\nmass: " + mass + "\nradius: " + radius;
+	}
+
+	public void showName() {
+		if (distSq(transform.position, transform.position) < width/2) {
+			textAlign(CENTER);
+			fill(150);
+			text(getName(), 0, radius + 25);
+			textAlign(LEFT);
+		}
+	}
+
+	public void drawBody() {
+		showName();
+	}
+}
+class Color {
+	int r;
+	int g;
+	int b;
+
+	public Color(int _r, int _g, int _b) {
+		r = _r;
+		g = _g;
+		b = _b;
 	}
 }
 class GameObject extends Node {
@@ -142,7 +189,13 @@ class GameObject extends Node {
 	Transform transform;
 	Physics physics;
 	boolean inFrustum = true;
-	Camera camera;
+	boolean selected = false;
+
+	GameObject parent;
+
+	int selectSize;
+
+	ArrayList<GameObject> children;
 
 	// a reference to physics.position
 	PVector position;
@@ -154,10 +207,43 @@ class GameObject extends Node {
 
 		// this reference stays forever
 		// transform.position = physics.position;
+		children = new ArrayList<GameObject>();
 	}
 
-	public void applyPhysics(PVector2D _velocity, float _mass, float _moment) {
-		physics = new Physics(transform.position, _velocity, _mass, _moment);
+	public void attach(GameObject o) {
+		children.add(o);
+		o.setParent(this);
+
+	}
+
+	// severs connection with previous parent, gets new parent
+	public void setParent(GameObject p) {
+		detach();
+		this.parent = p;
+	}
+
+	public void destroy() {
+		// if deleted...
+		// all children have no parent
+		for (GameObject child: children) {
+			child.setParent(null);
+		}
+
+		//  parent no longer has reference to this
+		parent.children.remove(this);
+	}
+
+	public void detach() {
+		if (parent != null) {
+			// leave parent
+			parent = null;
+			// parent's connection to child is severed
+			parent.children.remove(this);
+		}
+	}
+
+	public void applyPhysics(PVector2D _velocity, float _mass, float _moment, boolean _hasPhysics) {
+		physics = new Physics(transform.position, _velocity, _mass, _moment, _hasPhysics);
 	}
 
 	public void registerCamera(Camera _camera) {
@@ -168,19 +254,43 @@ class GameObject extends Node {
 
 	// GamePbject with no physics
 
+	public void interact() {
 
-	public void update(Camera _camera) {
-		// if (physics != null) {
+	}
+
+	public void update() {
+		interact();
+
+		if (physics != null && physics.hasPhysics) {
 			physics.update();
-		// }
+		}
 
-		inFrustum = abs(transform.position.getX() - _camera.transform.position.getX()) < width/2 && abs(transform.position.getY() - _camera.transform.position.getY()) < height/2;
+		inFrustum = abs(transform.position.getX() - camera.transform.position.getX() - width/2) < width && abs(transform.position.getY() - camera.transform.position.getY() - height/2) < height;
 
 
 	}
 
-	public void draw() {
+	public void drawConnections() {
 
+	}
+
+	public void drawBody() {
+
+	}
+
+	public void draw() {
+		drawConnections();
+		
+		pushMatrix();
+			translate(transform.position.getX(), transform.position.getY());
+			rotate(transform.getRotation());
+			if (inFrustum) {
+				drawBody();
+			}
+		popMatrix();
+
+
+		
 	}
 }
 class Node {
@@ -327,6 +437,8 @@ class PVector2D {
 float G = 0.001f;
 
 class Physics {
+	boolean hasPhysics;
+
 	float threshold = 0.02f;
 
 	float mass;
@@ -336,7 +448,6 @@ class Physics {
 	PVector2D acceleration;
 	PVector2D position;
 	PVector2D prev;
-
 
 	PVector2D forces;
 	float torques; // is used to represent torque
@@ -350,10 +461,11 @@ class Physics {
 	String typeObj;
 
 	public Physics() {
-		this(new PVector2D(0, 0), new PVector2D(0, 0), 0, 0);
+		this(new PVector2D(0, 0), new PVector2D(0, 0), 0, 0, true);
 	}
 
-	public Physics(PVector2D _position, PVector2D _velocity, float _mass, float _moment) {
+	public Physics(PVector2D _position, PVector2D _velocity, float _mass, float _moment, boolean _hasPhysics) {
+		hasPhysics = _hasPhysics;
 		position = _position;
 		velocity = _velocity.copy();
 		forces = new PVector2D(0, 0);
@@ -440,11 +552,18 @@ class Physics {
 
 		acceleration = forces.copy();
 		acceleration.div(mass);
+		if (frameCount > 15) {
+			acceleration.mult(30/frameRate);
+		}
+		
 
 		velocity.add(acceleration);
+		if (frameCount > 15) {
+			velocity.mult(30/frameRate);
+		}
+		
 
 		position.add(velocity);
-		println(velocity + " - " + position);
 
 		alpha = torques / moment;
 
@@ -489,6 +608,66 @@ class Physics {
 		
 	}
 }
+class Planet extends CelestialBody {
+	Color col;
+	float orbitRadius;
+	float orbitAngle;
+	float w;
+
+	
+	public Planet(String _name, float _radius, Color _col, Star star, float _orbitRadius) {
+		super(_name, new Transform(), _radius);
+		star.attach(this);
+
+		orbitAngle = random(0, 1) * PI * 2;
+		orbitRadius = _orbitRadius;
+		w = pow(star.physics.mass, 0.5f) / pow(orbitRadius, 1.5f)/100;
+		col = _col;
+	}
+	public String getName() {
+		return super.getName() + "\n" + orbitAngle;
+	}
+
+	public void drawBody() {
+		super.drawBody();
+		noStroke();
+		fill(col.r, col.g, col.b);
+		ellipse(0, 0, radius * 2, radius * 2);
+	}
+
+	public void update() {
+		transform.position.v.x = parent.transform.position.getX() + cos(orbitAngle) * orbitRadius;
+		transform.position.v.y = parent.transform.position.getY() + sin(orbitAngle) * orbitRadius;
+
+		orbitAngle += w;
+	}
+
+	public void drawConnections() {
+		stroke(0, 255, 0);
+		strokeWeight(1);
+		line(transform.position.getX() - cos(orbitAngle) * radius, transform.position.getY() - sin(orbitAngle) * radius, parent.transform.position.getX() + cos(orbitAngle) * ((Star) parent).radius, parent.transform.position.getY() + sin(orbitAngle) * ((Star) parent).radius);
+		noStroke();
+	}
+}
+class Star extends CelestialBody {
+	Color col;
+
+	ArrayList<Planet> planets;
+	public Star(String _name, Transform _transform, float _radius, Color _col) {
+		super(_name, _transform, _radius);
+		col = _col;
+		println(radius);
+	}
+
+
+
+	public void drawBody() {
+		super.drawBody();
+		noStroke();
+		fill(col.r, col.g, col.b);
+		ellipse(0, 0, radius * 2, radius * 2);
+	}
+}
 class System {
 	
 }
@@ -527,6 +706,10 @@ class Transform {
 
 	public void setBody(GameObject o) {
 		body = o;
+	}
+
+	public float getRotation() {
+		return rotation;
 	}
 
 }
@@ -835,6 +1018,29 @@ public float distSq(PVector2D p1, PVector2D p2) {
 
 public float distSq(float x, float y) {
 	return (pow(x, 2) + pow(y, 2));
+}
+
+///////////////////////////////////////
+public void translate(Transform transform) {
+	translate(transform.position.getX(), transform.position.getY());
+}
+
+public void rotate(Transform transform) {
+	rotate(transform.getRotation());
+}
+public void circle(Transform transform, float radius) {
+	pushMatrix();
+		translate(transform);
+		ellipse(0, 0, radius * 2, radius * 2);
+	popMatrix();
+}
+
+public void line(Transform t1, Transform t2) {
+	line(t1.position.getX(), t1.position.getY(), t2.position.getX(), t2.position.getY());
+}
+
+public void line(PVector2D p1, PVector2D p2) {
+	line(p1.getX(), p1.getY(), p2.getX(), p2.getY());
 }
 class Vector {
 

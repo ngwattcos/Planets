@@ -4,6 +4,7 @@ PFont courierNew;
 
 void setup() {
 	size(900, 600, OPENGL);
+	frameRate(32);
 
 	monaco = createFont("monaco", 20);
 	courierNew = createFont("monaco", 10);
@@ -13,26 +14,35 @@ void setup() {
 	}
 }
 
-Camera camera;
+Camera camera = new Camera();
 
 void load() {
-	camera = new Camera();
 
-	objects = new ArrayList<GameObject>();
+	
+	Star sun = new Star("Sun", new Transform(new PVector2D(0, 300)), 300, new Color(255, 150, 0));
+	objects.add(sun);
 
+	Planet earth = new Planet("Earth", 30, new Color(0, 150, 255), sun, 600);
+	objects.add(earth);
 }
 
-ArrayList<GameObject> objects;
+ArrayList<GameObject> objects = new ArrayList<GameObject>();
 
 int frameCounter = 0;
+
+void updateGame() {
+	for (GameObject o: objects) {
+		o.update();
+	}
+}
 
 void drawGame() {
 	for (GameObject o: objects) {
 		o.draw();
 	}
 	fill(255, 150, 0);
-	noStroke();
-	ellipse(0, 0, 1000, 1000);
+	// noStroke();
+	// ellipse(0, 0, 1000, 1000);
 }
 
 void debug() {
@@ -43,10 +53,11 @@ void debug() {
 }
 
 void draw() {
-	background(0);
-	textFont(courierNew, 12);
 
-	if (frameCounter == 0) {
+	background(0);
+	textFont(courierNew, 11);
+
+	if (frameCounter == 10) {
 		load();
 	}
 
@@ -54,7 +65,9 @@ void draw() {
 
 	mouse.check();
 
-	camera.update(camera);
+	camera.update();
+
+	updateGame();
 
 	pushMatrix();
 		translate(-camera.transform.position.getX(), -camera.transform.position.getY());

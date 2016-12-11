@@ -6,8 +6,8 @@ class Camera extends GameObject {
 		super(_transform);
 		scale = _scale;
 
-		applyPhysics(new PVector2D(10, 0), 10, 0);
-		physics.cd = 0.7;
+		applyPhysics(new PVector2D(10, 0), 10, 0, true);
+		physics.cd = 2;
 		// physics = new Physics();
 	}
 
@@ -18,34 +18,26 @@ class Camera extends GameObject {
 	void interact() {
 		if (active) {
 			if (keys[37].pressed) {
-				fill(0, 255, 255);
-				ellipse(width/2, height/2, 50, 50);
-				physics.applyForce(new PVector2D(-10, 0), new PVector2D(0, 0));
+				physics.applyForce(new PVector2D(-50, 0), new PVector2D(0, 0));
 			}
 			if (keys[38].pressed) {
-				fill(0, 255, 255);
-				ellipse(width/2, height/2, 50, 50);
-				physics.applyForce(new PVector2D(0, -10), new PVector2D(0, 0));
+				physics.applyForce(new PVector2D(0, -50), new PVector2D(0, 0));
 
 			}
 			if (keys[39].pressed) {
-				fill(0, 255, 255);
-				ellipse(width/2, height/2, 50, 50);
-				physics.applyForce(new PVector2D(10, 0), new PVector2D(0, 0));
+				physics.applyForce(new PVector2D(50, 0), new PVector2D(0, 0));
 
 			}
 			if (keys[40].pressed) {
-				fill(0, 255, 255);
-				ellipse(width/2, height/2, 50, 50);
-				physics.applyForce(new PVector2D(0, 10), new PVector2D(0, 0));
+				physics.applyForce(new PVector2D(0, 50), new PVector2D(0, 0));
 
 			}
 		}
 		
 	}
 
-	void update(Camera _camera) {
-		super.update(_camera);
+	void update() {
 		interact();
+		physics.update();
 	}
 }
